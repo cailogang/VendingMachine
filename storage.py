@@ -11,7 +11,7 @@ class Product:
         self.stock += stock
 
     def sell(self):
-        if self.stock < 0:
+        if self.stock < 1:
             print("Đã hết hàng")
             return
         self.stock -= 1
