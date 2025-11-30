@@ -1,5 +1,5 @@
 # Yêu cầu bài đến từ
-[LHU elearing](https://learn.lhu.edu.vn/mod/assign/view.php?id=275403&forceview=1)
+[LHU elearning](https://learn.lhu.edu.vn/mod/assign/view.php?id=275403&forceview=1)
 
 Đề tài 3: Máy Bán Hàng Quản Lý Tồn Kho 📦(Số nhóm được chọn: 1)
 
