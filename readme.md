@@ -1,3 +1,25 @@
+# Yêu cầu bài đến từ
+[LHU elearing](https://learn.lhu.edu.vn/mod/assign/view.php?id=275403&forceview=1)
+
+Đề tài 3: Máy Bán Hàng Quản Lý Tồn Kho 📦(Số nhóm được chọn: 1)
+
+·         Mô tả đề tài: Đây là phiên bản nâng cao của bài toán máy bán hàng tự động. Thay vì chỉ bán hàng, chương trình còn phải quản lý số lượng tồn kho của từng sản phẩm. Thử thách của đề tài là quản lý trạng thái của nhiều đối tượng (sản phẩm) bằng các biến đơn giản và đảm bảo dữ liệu (số lượng, tiền) được cập nhật chính xác sau mỗi giao dịch.
+
+·         Yêu cầu chi tiết:
+
+1.      Khởi tạo ít nhất 3 sản phẩm, mỗi sản phẩm có tên, giá bán, và số lượng tồn kho ban đầu.
+
+2.      Hiển thị menu sản phẩm cho người dùng, kèm theo giá và số lượng còn lại.
+
+3.      Khi người dùng chọn mua một sản phẩm, chương trình phải kiểm tra đồng thời 2 điều kiện: sản phẩm có còn hàng không và người dùng có đủ tiền không.
+
+4.      Nếu giao dịch thành công, chương trình phải: trừ tiền của người dùng, giảm số lượng tồn kho của sản phẩm đi 1, và thông báo thành công.
+
+5.      Nếu sản phẩm đã hết hàng hoặc người dùng không đủ tiền, phải đưa ra thông báo lỗi tương ứng.
+
+6.      Menu phải được cập nhật sau mỗi lần mua để phản ánh đúng số lượng tồn kho mới.
+
+
 # Cách hoạt động của chương trình này
 
 Chương trình này mô phỏng một máy bán hàng tự động (Vending Machine) chạy trên giao diện dòng lệnh (CLI). Nó bao gồm quản lý kho hàng, xử lý giao dịch mua bán và giao diện người dùng tương tác.
