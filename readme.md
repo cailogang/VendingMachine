@@ -1,4 +1,4 @@
-# Hướng Dẫn Hoạt Động Chương Trình Máy Bán Hàng Tự Động
+# Cách hoạt động của chương trình này
 
 Chương trình này mô phỏng một máy bán hàng tự động (Vending Machine) chạy trên giao diện dòng lệnh (CLI). Nó bao gồm quản lý kho hàng, xử lý giao dịch mua bán và giao diện người dùng tương tác.
 
