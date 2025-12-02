@@ -203,66 +203,56 @@ Sau mỗi hành động, chương trình dùng `time.sleep(3)` để dừng màn
 
 ```mermaid
 flowchart TD
-    Start([Bắt đầu chương trình]) --> Init[Khởi tạo VendingMachineStorage & Console]
-    Init --> ClearScreen[Xóa màn hình Console]
+    Start([Bắt đầu]) --> Init[Khởi tạo VendingMachineStorage<br/>và Console]
+    Init --> Clear[Xóa màn hình]
+    Clear --> Display[Hiển thị bảng sản phẩm<br/>với ID, tên, giá, số lượng]
+    Display --> ShowMoney[Hiển thị số tiền hiện có]
+    ShowMoney --> Prompt{Bạn muốn làm gì?<br/>naptien / muahang}
     
-    subgraph Main_Loop [Vòng Lặp Chính]
-        ClearScreen --> DisplayTable[Hiển thị bảng sản phẩm & Số dư]
-        DisplayTable --> PromptAction[/Nhập lệnh: 'naptien' hoặc 'muahang'/]
-        
-        PromptAction --> CheckAction{Kiểm tra lệnh}
-        
-        %% Nhánh Nạp tiền
-        CheckAction -- "naptien" --> InputMoney[/Nhập số tiền muốn nạp/]
-        InputMoney --> CheckMinMoney{Tiền >= 10.000?}
-        CheckMinMoney -- Không --> ErrMoney[Thông báo: Cần nạp >= 10.000]
-        CheckMinMoney -- Có --> AddBalance[Cộng tiền vào tài khoản]
-        AddBalance --> PrintBalance[Thông báo số dư mới]
-        
-        %% Nhánh Mua hàng
-        CheckAction -- "muahang" --> InputID[/Nhập ID sản phẩm/]
-        InputID --> CheckIDExists{ID có tồn tại?}
-        CheckIDExists -- Không --> ErrID[Thông báo: ID không có trong máy]
-        
-        CheckIDExists -- Có --> GetPrice[Lấy giá sản phẩm]
-        GetPrice --> CheckBalanceMain{Số dư < Giá sản phẩm?}
-        
-        %% Logic nạp thêm tiền nếu thiếu (trong main.py)
-        CheckBalanceMain -- "Có (Thiếu tiền)" --> PromptAddMore[/Yêu cầu nạp thêm tiền/]
-        PromptAddMore --> CallNapTien[Gọi hàm nạp tiền]
-        CallNapTien --> AttemptSell[Tiến hành gọi hàm bán hàng]
-        CheckBalanceMain -- "Không (Đủ tiền)" --> AttemptSell
-        
-        %% Logic bên trong hàm sell_product (storage.py)
-        subgraph Sell_Logic [Logic Xử lý Giao dịch]
-            AttemptSell --> CheckMoneyFinal{Đủ tiền thanh toán?}
-            CheckMoneyFinal -- Không --> ErrNotEnough[Thông báo: Không đủ tiền]
-            CheckMoneyFinal -- Có --> CheckStock{"Còn hàng (Stock > 0)"?}
-            CheckStock -- Không --> ErrStock[Thông báo: Hết hàng]
-            CheckStock -- Có --> Deduct[Trừ tiền & Giảm tồn kho]
-            Deduct --> Success[Thông báo: Mua thành công]
-        end
-        
-        %% Nhánh Sai lệnh
-        CheckAction -- Khác --> ErrCmd[Thông báo: Lựa chọn không hợp lý]
-    end
-
-    %% Kết thúc vòng lặp
-    ErrMoney --> Sleep[Chờ 3 giây]
-    PrintBalance --> Sleep
-    ErrID --> Sleep
-    ErrNotEnough --> Sleep
-    ErrStock --> Sleep
-    Success --> Sleep
-    ErrCmd --> Sleep
+    Prompt -->|naptien| InputMoney[Nhập số tiền muốn nạp]
+    InputMoney --> CheckMinMoney{Tiền >= 10,000 VND?}
+    CheckMinMoney -->|Có| AddMoney[Cộng tiền vào tài khoản<br/>Hiển thị số dư mới]
+    CheckMinMoney -->|Không| ErrorMin[In: Cần nạp >= 10,000 VND]
+    ErrorMin --> Wait1[Chờ 3 giây]
+    AddMoney --> Wait1
     
-    Sleep --> ClearScreen
-
-    %% Xử lý thoát
-    Main_Loop -- "KeyboardInterrupt (Ctrl+C)" --> End([Kết thúc chương trình])
-
-    style Start fill:#f9f,stroke:#333,stroke-width:2px
-    style End fill:#f9f,stroke:#333,stroke-width:2px
-    style Main_Loop fill:#e1f5fe,stroke:#01579b
-    style Sell_Logic fill:#fff3e0,stroke:#ff6f00
+    Prompt -->|muahang| InputID[Nhập ID sản phẩm]
+    InputID --> CheckExists{Sản phẩm<br/>tồn tại?}
+    CheckExists -->|Không| ErrorNotFound[In: Sản phẩm không có trong máy]
+    ErrorNotFound --> Wait2[Chờ 3 giây]
+    
+    CheckExists -->|Có| CheckBalance{Số dư >= Giá?}
+    CheckBalance -->|Không| AskMoreMoney[Yêu cầu nạp thêm tiền]
+    AskMoreMoney --> AddMoreMoney[Nạp thêm tiền vào tài khoản]
+    AddMoreMoney --> ProcessSell
+    
+    CheckBalance -->|Có| ProcessSell[Gọi sell_product]
+    ProcessSell --> CheckStock{Còn hàng?}
+    CheckStock -->|Không| ErrorStock[In: Đã hết hàng]
+    ErrorStock --> Wait2
+    
+    CheckStock -->|Có| DeductMoney[Trừ tiền từ tài khoản]
+    DeductMoney --> DeductStock[Giảm số lượng sản phẩm]
+    DeductStock --> Success[In: Đã mua thành công<br/>Cảm ơn quý khách]
+    Success --> Wait2
+    
+    Wait1 --> Clear
+    Wait2 --> Clear
+    
+    Clear -.->|KeyboardInterrupt| Exit1[In: Đang tắt...]
+    Clear -.->|Exception| Exit2[In: Đã xảy ra lỗi]
+    Exit1 --> End([Kết thúc])
+    Exit2 --> End
+    
+    style Start fill:#90EE90
+    style End fill:#FFB6C6
+    style Prompt fill:#87CEEB
+    style CheckExists fill:#FFD700
+    style CheckBalance fill:#FFD700
+    style CheckStock fill:#FFD700
+    style CheckMinMoney fill:#FFD700
+    style Success fill:#98FB98
+    style ErrorNotFound fill:#FFA07A
+    style ErrorStock fill:#FFA07A
+    style ErrorMin fill:#FFA07A
 ```
