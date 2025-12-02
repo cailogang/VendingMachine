@@ -198,3 +198,71 @@ elif selection == "muahang":
 #### Thời gian chờ
 
 Sau mỗi hành động, chương trình dùng `time.sleep(3)` để dừng màn hình trong 3 giây cho người dùng đọc thông báo trước khi xóa màn hình và vẽ lại bảng.
+
+### Flowchart của chương trình
+
+```mermaid
+flowchart TD
+    Start([Bắt đầu chương trình]) --> Init[Khởi tạo VendingMachineStorage & Console]
+    Init --> ClearScreen[Xóa màn hình Console]
+    
+    subgraph Main_Loop [Vòng Lặp Chính]
+        ClearScreen --> DisplayTable[Hiển thị bảng sản phẩm & Số dư]
+        DisplayTable --> PromptAction[/Nhập lệnh: 'naptien' hoặc 'muahang'/]
+        
+        PromptAction --> CheckAction{Kiểm tra lệnh}
+        
+        %% Nhánh Nạp tiền
+        CheckAction -- "naptien" --> InputMoney[/Nhập số tiền muốn nạp/]
+        InputMoney --> CheckMinMoney{Tiền >= 10.000?}
+        CheckMinMoney -- Không --> ErrMoney[Thông báo: Cần nạp >= 10.000]
+        CheckMinMoney -- Có --> AddBalance[Cộng tiền vào tài khoản]
+        AddBalance --> PrintBalance[Thông báo số dư mới]
+        
+        %% Nhánh Mua hàng
+        CheckAction -- "muahang" --> InputID[/Nhập ID sản phẩm/]
+        InputID --> CheckIDExists{ID có tồn tại?}
+        CheckIDExists -- Không --> ErrID[Thông báo: ID không có trong máy]
+        
+        CheckIDExists -- Có --> GetPrice[Lấy giá sản phẩm]
+        GetPrice --> CheckBalanceMain{Số dư < Giá sản phẩm?}
+        
+        %% Logic nạp thêm tiền nếu thiếu (trong main.py)
+        CheckBalanceMain -- "Có (Thiếu tiền)" --> PromptAddMore[/Yêu cầu nạp thêm tiền/]
+        PromptAddMore --> CallNapTien[Gọi hàm nạp tiền]
+        CallNapTien --> AttemptSell[Tiến hành gọi hàm bán hàng]
+        CheckBalanceMain -- "Không (Đủ tiền)" --> AttemptSell
+        
+        %% Logic bên trong hàm sell_product (storage.py)
+        subgraph Sell_Logic [Logic Xử lý Giao dịch]
+            AttemptSell --> CheckMoneyFinal{Đủ tiền thanh toán?}
+            CheckMoneyFinal -- Không --> ErrNotEnough[Thông báo: Không đủ tiền]
+            CheckMoneyFinal -- Có --> CheckStock{"Còn hàng (Stock > 0)"?}
+            CheckStock -- Không --> ErrStock[Thông báo: Hết hàng]
+            CheckStock -- Có --> Deduct[Trừ tiền & Giảm tồn kho]
+            Deduct --> Success[Thông báo: Mua thành công]
+        end
+        
+        %% Nhánh Sai lệnh
+        CheckAction -- Khác --> ErrCmd[Thông báo: Lựa chọn không hợp lý]
+    end
+
+    %% Kết thúc vòng lặp
+    ErrMoney --> Sleep[Chờ 3 giây]
+    PrintBalance --> Sleep
+    ErrID --> Sleep
+    ErrNotEnough --> Sleep
+    ErrStock --> Sleep
+    Success --> Sleep
+    ErrCmd --> Sleep
+    
+    Sleep --> ClearScreen
+
+    %% Xử lý thoát
+    Main_Loop -- "KeyboardInterrupt (Ctrl+C)" --> End([Kết thúc chương trình])
+
+    style Start fill:#f9f,stroke:#333,stroke-width:2px
+    style End fill:#f9f,stroke:#333,stroke-width:2px
+    style Main_Loop fill:#e1f5fe,stroke:#01579b
+    style Sell_Logic fill:#fff3e0,stroke:#ff6f00
+```
