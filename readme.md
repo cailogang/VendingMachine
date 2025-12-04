@@ -19,185 +19,242 @@
 
 6.      Menu phải được cập nhật sau mỗi lần mua để phản ánh đúng số lượng tồn kho mới.
 
+# Máy Bán Hàng Tự Động (Vending Machine) - Phiên bản CLI bằng Python
 
-# Cách hoạt động của chương trình này
+## Mô tả chương trình
 
-Chương trình này mô phỏng một máy bán hàng tự động (Vending Machine) chạy trên giao diện dòng lệnh (CLI). Nó bao gồm quản lý kho hàng, xử lý giao dịch mua bán và giao diện người dùng tương tác.
+Chương trình mô phỏng một máy bán nước tự động hoàn chỉnh chạy trên terminal với giao diện đẹp nhờ thư viện `rich`.  
+Người dùng có thể nạp tiền (tối thiểu 10.000 VND), xem danh sách sản phẩm, mua hàng và nhận thông báo kết quả chi tiết.
 
-### Yêu cầu cài đặt
-
-Chương trình sử dụng thư viện `rich` để hiển thị giao diện đẹp mắt.
+## Yêu cầu cài đặt
 
 ```bash
 pip install rich
 ```
 
------
+Hoặc dùng file có sẵn:
+- Windows: chạy `install.bat`
+- Linux/macOS: chạy `install.sh`
 
-## 1\. Tệp `storage.py` - Xử lý Logic và Dữ liệu
+## Cách chạy chương trình
 
-Tệp này chứa các lớp (class) định nghĩa sản phẩm và logic quản lý của máy bán hàng.
-
-### Class `Product`
-
-Đại diện cho một mặt hàng cụ thể trong máy.
-
-#### Hàm khởi tạo `__init__`
-
-Thiết lập các thuộc tính cơ bản: tên, giá và số lượng tồn kho.
-
-```python
-def __init__(self, name, price, stock):
-    self.name = name
-    self.price = price
-    self.stock = stock
+```bash
+python main.py
 ```
 
-#### Hàm `sell()`
+## Cách hoạt động tổng quan
 
-Xử lý logic khi một sản phẩm đơn lẻ được bán ra. Nó kiểm tra xem còn hàng không (`stock < 1`), nếu còn thì trừ đi 1 đơn vị và in thông báo.
+1. Chương trình hiển thị bảng sản phẩm với ID, tên, giá và số lượng còn lại.
+2. Người dùng chọn:
+   - `naptien` → nạp tiền vào máy
+   - `muahang` → mua sản phẩm theo ID
+3. Khi mua hàng:
+   - Nếu không đủ tiền → tự động yêu cầu nạp thêm cho đến khi đủ
+   - Kiểm tra tồn kho, trừ tiền, trừ hàng và thông báo kết quả
+4. Sau mỗi hành động sẽ tạm dừng 3 giây rồi làm mới màn hình.
 
-```python
-def sell(self):
-    if self.stock < 1:
-        print("Đã hết hàng")
-        return
-    self.stock -= 1
-    print(f"Đã mua sản phẩm {self.name} với giá {self.price}VND, Cảm ơn quý khách đã mua hàng")
+---
+
+## Cấu trúc mã nguồn
+
+```
+VendingMachine/
+├── enums.py          → Định nghĩa các Enum trạng thái
+├── storage.py        → Logic nghiệp vụ và dữ liệu
+├── main.py           → Giao diện người dùng & vòng lặp chính
+├── requirements.txt
+├── install.bat/sh
+└── readme.md
 ```
 
------
+---
 
-### Class `VendingMachineStorage`
+## Chi tiết các thành phần quan trọng
 
-Đây là lớp quản lý chính, chứa danh sách tất cả sản phẩm và số dư tiền của người dùng.
+### 1. `enums.py` – Các trạng thái trả về
 
-#### Hàm khởi tạo `__init__`
+Định nghĩa 3 enum để xử lý kết quả một cách rõ ràng, an toàn kiểu dữ liệu:
 
-Khởi tạo danh sách sản phẩm (`self.products`) dưới dạng từ điển (Dictionary) với ID làm khóa và đối tượng `Product` làm giá trị. Đồng thời khởi tạo ví tiền `self.money` bằng 0.
+```python
+class NaptienStatus(enum.Enum):
+    INVALID = 0          # Số tiền không hợp lệ (không phải int)
+    SUCCESS = 1          # Nạp thành công
+    UNDER_10K = 2        # Nạp dưới 10.000 VND
+
+class BuyProductStatus(enum.Enum):
+    NOT_ENOUGH_STOCK = 0   # Hết hàng
+    NOT_ENOUGH_MONEY = 1   # Không đủ tiền
+    NOT_EXISTS = 2         # ID sản phẩm không tồn tại
+    SUCCESS = 3            # Mua thành công
+    FAILED = 4             # Lỗi không xác định
+
+class ProductSellStatus(enum.Enum):
+    NOT_ENOUGH_STOCK = 0
+    SUCCESS = 1
+```
+
+---
+
+### 2. `storage.py` – Lớp quản lý dữ liệu và nghiệp vụ
+
+#### Class `Product`
+
+```python
+class Product:
+    def __init__(self, name, price, stock):
+        self.name = name
+        self.price = price
+        self.stock = stock
+
+    def sell(self) -> ProductSellStatus:
+        if self.stock < 1:
+            return ProductSellStatus.NOT_ENOUGH_STOCK
+        self.stock -= 1
+        return ProductSellStatus.SUCCESS
+```
+
+- `sell()` chỉ trừ 1 đơn vị kho và trả về trạng thái thành công hoặc hết hàng.
+
+#### Class `VendingMachineStorage` (lớp chính)
 
 ```python
 def __init__(self):
-    self.products: Dict[int, Product] = {
-        1: Product("Coca-Cola", 15000, 10),
-        # ... (các sản phẩm khác)
-        15: Product("Mirinda Cam", 15000, 5),
-    }
-    self.money = 0
+    self.products: Dict[int, Product] = { ... }  # 15 sản phẩm cố định
+    self.money = 0                               # Số dư của người dùng
 ```
 
-#### Hàm `nap_tien(money)`
-
-Cho phép người dùng nạp tiền vào máy.
-
-  * **Logic:** Kiểm tra số tiền nạp vào có lớn hơn hoặc bằng 10.000 VND hay không. Nếu hợp lệ, cộng dồn vào `self.money`.
-
-<!-- end list -->
+##### Hàm `nap_tien(self, money: int) -> NaptienStatus`
 
 ```python
-def nap_tien(self, money):
+def nap_tien(self, money: int) -> NaptienStatus:
+    if not isinstance(money, int):
+        return NaptienStatus.INVALID
     if money < 10_000:
-        print("Cần nạp số tiền lớn hơn hoặc bằng 10.000 VND")
-        return self.money
-
+        return NaptienStatus.UNDER_10K
     self.money += money
-    print(f"Bạn đã nạp {money} VND vào tài khoản, số tiền hiện tại {self.money} VND")
-
-    return self.money
+    return NaptienStatus.SUCCESS
 ```
 
-#### Hàm `sell_product(id)`
+- Kiểm tra kiểu dữ liệu và điều kiện tối thiểu 10.000 VND.
 
-Hàm quan trọng nhất để thực hiện giao dịch mua hàng.
-
-  * **Logic:**
-    1.  Kiểm tra ID sản phẩm có tồn tại không.
-    2.  Kiểm tra số dư (`self.money`) có đủ để mua không.
-    3.  Kiểm tra sản phẩm còn hàng (`stock`) hay không.
-    4.  Nếu tất cả đều thỏa mãn: Trừ tiền từ tài khoản và gọi hàm `product.sell()` để trừ kho.
-
-<!-- end list -->
+##### Hàm `sell_product(self, id) -> BuyProductStatus`
 
 ```python
-def sell_product(self, id):
+def sell_product(self, id) -> BuyProductStatus:
     if not self.has_products(id):
-        print(f"Sản phẩm với ID: {id} Không tồn tại")
-        return
-
+        return BuyProductStatus.NOT_EXISTS
+    
     product = self.get_product(id)
-    # ... (kiểm tra tồn tại)
-
     if self.money < product.price:
-        print("Không đủ tiền để mua sản phẩm này")
-        return
+        return BuyProductStatus.NOT_ENOUGH_MONEY
     if product.stock < 1:
-        print(f"Sản phẩm {product.name} đã hết hàng")
-        return
-
-    self.money -= product.price
-    product.sell()
+        return BuyProductStatus.NOT_ENOUGH_STOCK
+    
+    if product.sell() == ProductSellStatus.SUCCESS:
+        self.money -= product.price
+        return BuyProductStatus.SUCCESS
+    
+    return BuyProductStatus.FAILED
 ```
 
------
+- Đây là hàm cốt lõi thực hiện toàn bộ quy trình mua hàng một cách an toàn và trả về trạng thái chi tiết.
 
-## 2\. Tệp `main.py` - Giao diện người dùng (UI)
+##### Các hàm hỗ trợ khác
+- `get_balance()`, `get_product(id)`, `has_products(id)`, `get_all_products()` – chỉ lấy dữ liệu, không thay đổi trạng thái.
 
-Tệp này chịu trách nhiệm hiển thị bảng sản phẩm và nhận tương tác từ người dùng thông qua thư viện `rich`.
+---
 
-### Vòng lặp chính (`while True`)
+### 3. `main.py` – Giao diện và luồng điều khiển
 
-Chương trình chạy trong một vòng lặp vô hạn để liên tục phục vụ người dùng cho đến khi tắt.
-
-#### Hiển thị bảng sản phẩm
-
-Sử dụng `rich.table.Table` để tạo bảng. Dữ liệu được lấy từ `vending.get_all_products()` và duyệt qua vòng lặp để thêm từng dòng vào bảng hiển thị.
+#### Hàm `display_menu(console, vending)`
 
 ```python
-table = Table(
-    title=f"Máy bán hàng tự động - Bạn đang có {vending.money} VND",
-    show_lines=True,
-)
-# ... (Thêm cột)
-for id, item in vending.get_all_products().items():
-    table.add_row(str(id), item.name, str(item.price), str(item.stock))
-console.print(table)
+def display_menu(console: Console, vending: VendingMachineStorage):
+    console.clear()
+    table = Table(title=f"Máy bán hàng tự động - Bạn đang có {vending.money} VND", show_lines=True)
+    table.add_column("ID sản phẩm", style="cyan")
+    table.add_column("Tên sản phẩm", style="red")
+    table.add_column("Giá thành (VND)", style="blue")
+    table.add_column("Số lượng còn lại", style="magenta")
+    
+    for id, item in vending.get_all_products().items():
+        table.add_row(str(id), item.name, str(item.price), str(item.stock))
+    console.print(table)
 ```
 
-#### Xử lý lựa chọn người dùng
+- Xóa màn hình và vẽ lại bảng sản phẩm mỗi lần.
 
-Sử dụng `Prompt.ask` để người dùng chọn hành động: `naptien` hoặc `muahang`.
-
-**Trường hợp 1: Nạp tiền**
-Yêu cầu người dùng nhập số tiền và gọi hàm `vending.nap_tien()`.
+#### Hàm `process_topup(console, vending, prompt=...)`
 
 ```python
-if selection == "naptien":
-    tien_nap = IntPrompt.ask("Vui lòng nhập số tiền muốn nạp", console=console)
-    vending.nap_tien(int(tien_nap))
+def process_topup(console: Console, vending: VendingMachineStorage, prompt="Vui lòng nhập số tiền muốn nạp"):
+    tien_nap = IntPrompt.ask(prompt, console=console)
+    match vending.nap_tien(int(tien_nap)):
+        case NaptienStatus.SUCCESS:
+            console.print(f"Bạn đã nạp {tien_nap} VND ...", style="green")
+        case NaptienStatus.UNDER_10K:
+            console.print("Cần nạp số tiền lớn hơn hoặc bằng 10.000 VND", style="red")
+        ...
 ```
 
-**Trường hợp 2: Mua hàng**
+- Sử dụng `match-case` để xử lý tất cả trạng thái trả về từ `nap_tien`.
 
-  * Yêu cầu nhập ID sản phẩm.
-  * Kiểm tra tiền: Nếu số dư hiện tại (`vending.get_balance()`) nhỏ hơn giá sản phẩm, hệ thống sẽ yêu cầu nạp thêm tiền ngay lập tức.
-  * Cuối cùng gọi `vending.sell_product()` để hoàn tất.
-
-<!-- end list -->
+#### Hàm `process_buy_product(console, vending)`
 
 ```python
-elif selection == "muahang":
+def process_buy_product(console: Console, vending: VendingMachineStorage):
     id_mon_hang = IntPrompt.ask("Vui lòng chọn ID sản phẩm theo bảng phía trên", console=console)
-    # ... (Kiểm tra tồn tại ID)
-    product_price = vending.get_product(int(id_mon_hang)).price
-    if vending.get_balance() < product_price:
-        tien_nap = IntPrompt.ask("Vui lòng nạp thêm tiền")
-        vending.nap_tien(int(tien_nap))
-    vending.sell_product(int(id_mon_hang))
+    
+    if not vending.has_products(int(id_mon_hang)):
+        console.print(f"Sản phẩm với ID {id_mon_hang} không có trong máy")
+        return
+    
+    product = vending.get_product(int(id_mon_hang))
+    
+    # Tự động yêu cầu nạp thêm tiền nếu thiếu (vòng lặp while)
+    while vending.get_balance() < product.price:
+        process_topup(console, vending, 
+                     f"Vui lòng nạp thêm tiền, bạn còn thiếu {product.price - vending.money} VND để mua mặt hàng này")
+    
+    # Thực hiện mua
+    match vending.sell_product(int(id_mon_hang)):
+        case BuyProductStatus.SUCCESS:
+            console.print(f"Đã mua sản phẩm {product.name} ...", style="green")
+        case BuyProductStatus.NOT_ENOUGH_STOCK:
+            console.print(f"Mặt hàng {product.name} đã hết hàng", style="yellow")
+        ...
 ```
 
-#### Thời gian chờ
+- Đặc biệt: vòng lặp `while` buộc người dùng nạp đủ tiền trước khi cho phép mua → trải nghiệm người dùng rất tốt.
 
-Sau mỗi hành động, chương trình dùng `time.sleep(3)` để dừng màn hình trong 3 giây cho người dùng đọc thông báo trước khi xóa màn hình và vẽ lại bảng.
+#### Vòng lặp chính
+
+```python
+while True:
+    display_menu(console, vending)
+    selection = Prompt.ask("Bạn muốn làm gì?", choices=["naptien", "muahang"])
+    
+    if selection == "naptien":
+        process_topup(console, vending)
+    elif selection == "muahang":
+        process_buy_product(console, vending)
+    
+    time.sleep(3)   # Đợi 3 giây để người dùng đọc thông báo
+```
+
+- Chương trình chỉ thoát khi người dùng nhấn `Ctrl+C`.
+
+---
+
+## Tính năng nổi bật
+
+- Giao diện đẹp, màu sắc rõ ràng nhờ `rich`
+- Kiểm tra đầy đủ các trường hợp lỗi (hết hàng, không đủ tiền, sản phẩm không tồn tại)
+- Tự động yêu cầu nạp thêm tiền khi thiếu (không cần quay lại menu)
+- Sử dụng `Enum` và `match-case` → code hiện đại, dễ bảo trì
+- Dễ mở rộng: chỉ cần thêm sản phẩm vào `__init__` của `VendingMachineStorage`
+
+Chúc bạn trải nghiệm vui vẻ với máy bán nước tự động ảo này!
 
 ### Flowchart của chương trình
 
