@@ -99,7 +99,7 @@ def process_topup(console: Console, vending: VendingMachineStorage, prompt="Vui 
         case _:
             console.print("Đã xảy ra lỗi: Hàm đã trả về giá trị không mong muốn", style="red")
 
-if __name__ == '__main__':
+def main():
     vending = VendingMachineStorage()
     console = Console()
     try:
@@ -123,3 +123,6 @@ if __name__ == '__main__':
         console.print("Đang tắt...")
     except Exception as err:
         console.print(f"Đã xảy ra lỗi: {err}")
+
+if __name__ == '__main__':
+    main()
