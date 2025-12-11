@@ -54,8 +54,7 @@ def process_buy_product(console: Console, vending: VendingMachineStorage):
             return
 
         while vending.get_balance() < product.price:
-            while vending.get_balance() < product.price:
-                process_topup(console, vending, f"Vui lòng nạp thêm tiền, bạn còn thiếu {product.price - vending.money} VND để mua mặt hàng này")
+            process_topup(console, vending, f"Vui lòng nạp thêm tiền, bạn còn thiếu {product.price - vending.money} VND để mua mặt hàng này")
         match vending.sell_product(int(id_mon_hang)):
 
             case BuyProductStatus.SUCCESS:
