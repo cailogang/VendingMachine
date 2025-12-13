@@ -279,9 +279,7 @@ flowchart TD
     ErrorNotFound --> Wait2[Chờ 3 giây]
     
     CheckExists -->|Có| CheckBalance{Số dư >= Giá?}
-    CheckBalance -->|Không| AskMoreMoney[Yêu cầu nạp thêm tiền]
-    AskMoreMoney --> AddMoreMoney[Nạp thêm tiền vào tài khoản]
-    AddMoreMoney --> CheckBalance
+    CheckBalance -->|Không| Display2[Bạn không đủ tiền để mua sản phẩm này] --> Wait2
     
     CheckBalance -->|Có| ProcessSell[Gọi sell_product]
     ProcessSell --> CheckStock{Còn hàng?}
