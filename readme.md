@@ -281,7 +281,7 @@ flowchart TD
     CheckExists -->|Có| CheckBalance{Số dư >= Giá?}
     CheckBalance -->|Không| AskMoreMoney[Yêu cầu nạp thêm tiền]
     AskMoreMoney --> AddMoreMoney[Nạp thêm tiền vào tài khoản]
-    AddMoreMoney --> ProcessSell
+    AddMoreMoney --> CheckBalance
     
     CheckBalance -->|Có| ProcessSell[Gọi sell_product]
     ProcessSell --> CheckStock{Còn hàng?}

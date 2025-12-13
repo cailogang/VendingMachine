@@ -8,9 +8,6 @@ class Product:
         self.price = price
         self.stock = stock
 
-    def add_stock(self, stock):
-        self.stock += stock
-
     def sell(self) -> ProductSellStatus:
         if self.stock < 1:
             return ProductSellStatus.NOT_ENOUGH_STOCK
@@ -23,12 +20,13 @@ class Product:
 
 class VendingMachineStorage:
     def __init__(self):
+        # Khởi tạo các khay hàng trong máy với tên sản phầm, giá tiền và số lượng sản phẩm trên những khay đó
         self.products: Dict[int, Product] = {
             1: Product("Coca-Cola", 50_000, 10), # Testcase: Số tiền lớn
             2: Product("Pepsi", 15_000, 0), # Testcase: Hết hàng
             3: Product("Sting Dâu", 10_000, 5),
             4: Product("Red Bull", 20_000, 2),
-            5: Product("Nước Suối", 5000, 20),
+            5: Product("Nước Suối", 10_000, 20),
             6: Product("Trà Xanh Không Độ", 10_000, 7),
             7: Product("Café lon", 20_000, 0),
             8: Product("Olong Tea", 10_000, 9),
@@ -86,25 +84,3 @@ class VendingMachineStorage:
             return BuyProductStatus.SUCCESS
 
         return BuyProductStatus.FAILED
-
-    def reset(self):
-        self.products: Dict[int, Product] = {
-            1: Product("Coca-Cola", 15000, 10),
-            2: Product("Pepsi", 15000, 0),
-            3: Product("Sting Dâu", 12000, 5),
-            4: Product("Red Bull", 20000, 2),
-            5: Product("Nước Suối", 8000, 20),
-            6: Product("Trà Xanh Không Độ", 10000, 7),
-            7: Product("Café lon", 18000, 0),
-            8: Product("Olong Tea", 13000, 9),
-            9: Product("Sữa Bắp", 14000, 3),
-            10: Product("Nước Cam Ép", 16000, 12),
-            11: Product("Revive", 12000, 4),
-            12: Product("Aquafina", 9000, 15),
-            13: Product("Trà Sữa Đóng Chai", 18000, 6),
-            14: Product("7Up", 15000, 8),
-            15: Product("Mirinda Cam", 15000, 5),
-        }
-
-        return True
-

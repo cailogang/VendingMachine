@@ -1,10 +1,10 @@
 from rich.console import Console
-from rich.table import Table
-from rich.prompt import Prompt, IntPrompt
+from rich.table import Table # In bảng
+from rich.prompt import Prompt, IntPrompt # Mục hỏi người dùng (Tương tự input())
 
-from enums import NaptienStatus, BuyProductStatus
-from storage import VendingMachineStorage
-import time
+from enums import NaptienStatus, BuyProductStatus # Định nghĩa trạng thái
+from storage import VendingMachineStorage # Trái tim chương trình
+import time # Sleep - tạm dừng chương trình
 
 def display_menu(console: Console, vending: VendingMachineStorage):
     """
@@ -26,7 +26,7 @@ def display_menu(console: Console, vending: VendingMachineStorage):
     table.add_column("Giá thành (VND)", style="blue")
     table.add_column("Số lượng còn lại", style="magenta")
 
-    for id, item in vending.get_all_products().items():
+    for id, item in vending.get_all_products().items(): # lấy cặp key-value trong danh sách tất cả sản phẩm trong máy bán
         table.add_row(str(id), item.name, str(item.price), str(item.stock))
 
     console.print(table)

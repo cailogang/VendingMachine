@@ -1,3 +1,4 @@
+# Đây là file định nghĩa các trạng thái để dùng trong chương trình
 import enum
 
 class NaptienStatus(enum.Enum):
