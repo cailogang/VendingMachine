@@ -33,10 +33,10 @@ def display_menu(console: Console, vending: VendingMachineStorage):
 
 def process_buy_product(console: Console, vending: VendingMachineStorage):
     """
-    Hàm phục vụ việc mua hàng của người dùng
-    :param console: Class chính của rich.console.Console, chịu trách nhiệm quản lý hệ thống UI / UX
-    :param vending: Class quản lý hệ thống bán hàng
-    :return: None
+        Hàm phục vụ việc mua hàng của người dùng
+        :param console: Class chính của rich.console.Console, chịu trách nhiệm quản lý hệ thống UI / UX
+        :param vending: Class quản lý hệ thống bán hàng
+        :return: None
     """
     id_mon_hang = IntPrompt.ask(
         "Vui lòng chọn ID sản phẩm theo bảng phía trên",
@@ -53,8 +53,8 @@ def process_buy_product(console: Console, vending: VendingMachineStorage):
             console.print(f"Sản phẩm {product.name} đã hết hàng")
             return
 
-        while vending.get_balance() < product.price:
-            process_topup(console, vending, f"Vui lòng nạp thêm tiền, bạn còn thiếu {product.price - vending.money} VND để mua mặt hàng này")
+        # while vending.get_balance() < product.price:
+        #     process_topup(console, vending, f"Vui lòng nạp thêm tiền, bạn còn thiếu {product.price - vending.money} VND để mua mặt hàng này")
         match vending.sell_product(int(id_mon_hang)):
 
             case BuyProductStatus.SUCCESS:
